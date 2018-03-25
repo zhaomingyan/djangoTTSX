@@ -1,12 +1,22 @@
 from django.db import models
 from utils.models import BaseModel
 from django.contrib.auth.models import AbstractUser
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from django.conf import settings
 # Create your models here.
 
 
 class User(BaseModel,AbstractUser):
     class Meta:
         db_table = "df_users"
+
+    def generate_active_token(self):
+        """生成激活令牌"""
+        serializer = Serializer(settings.SECRET_KEY, 3600)
+        token = serializer.dumps({"confirm": self.id})  # 返回bytes类型
+        return token.decode()
+
+
 
 class AreaInfo(models.Model):
     title = models.CharField(max_length=20)
