@@ -1,12 +1,14 @@
 from django.shortcuts import render,redirect
 from django.views.generic import View
-from .models import User
-from django.http import HttpResponse
+from .models import User,Address,AreaInfo
+from django.http import HttpResponse,JsonResponse
 import re
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer,SignatureExpired
 from django.conf import settings
 from django.core.mail import send_mail
-from django.contrib.auth import authenticate,login
+from django.contrib.auth import authenticate,login,logout
+from django.contrib.auth.decorators import login_required
+from utils.views import LoginRequiredMinix
 
 
 class RegisterView(View):
@@ -17,7 +19,7 @@ class RegisterView(View):
     def post(self,request):
         #接受结果
         dict = request.POST
-        uname = dict.get('user_name')
+        uname = dict.get('uname')
         pwd = dict.get('pwd')
         cpwd = dict.get('cpwd')
         email = dict.get('email')
@@ -62,7 +64,7 @@ class RegisterView(View):
 
         #保存数据
         user = User.objects.create_user(uname,email,pwd)
-        user.is_active = False
+        user.is_active = True
         user.save()
 
 
@@ -76,7 +78,7 @@ class RegisterView(View):
         # msg = '<a href="http://127.0.0.1:8000/user/active/%s">点击激活</a>' % value
         # send_mail('天天生鲜_激活地址','',settings.EMAIL_FROM,[email],html_message=msg)
 
-        def send_active_email(email, user_name, token):
+        def send_active_email(email, uname, token):
             """封装发送邮件方法"""
             subject = "天天生鲜用户激活"  # 标题
             body = ""  # 文本邮件体
@@ -84,7 +86,7 @@ class RegisterView(View):
             receiver = [email]  # 接收人
             html_body = '<h1>尊敬的用户 %s, 感谢您注册天天生鲜！</h1>' \
                         '<br/><p>请点击此链接激活您的帐号<a href="http://127.0.0.1:8000/users/active/%s">' \
-                        'http://127.0.0.1:8000/users/active/%s</a></p>' % (user_name, token, token)
+                        'http://127.0.0.1:8000/users/active/%s</a></p>' % (uname, token, token)
             send_mail(subject, body, sender, receiver, html_message=html_body)
 
 
@@ -109,24 +111,30 @@ def active(request,value):
 
 class LoginView(View):
     def get(self,request):
-        return render(request,'login.html')
+        uname = request.COOKIES.get('uname','')
+        context = {
+            'title':'登录',
+            'username':uname,
+        }
+        return render(request,'login.html',context)
     def post(self,request):
         #接收数据
         dict = request.POST
-        user_name = dict.get('username')
+        uname = dict.get('username')
         pwd = dict.get('pwd')
+        remember = dict.get('remember')
 
         context = {
-            'username':user_name,
+            'username':uname,
             'pwd':pwd,
             'err_msy':''
         }
         #判断数据是否为空
-        if not all([user_name ,pwd]):
+        if not all([uname ,pwd]):
             context['err_msy'] = '请填写帐号和密码'
             return render(request,'login.html',context)
         # 判断数据是否存在
-        user = authenticate(username=user_name, password=pwd)
+        user = authenticate(username=uname, password=pwd)
 
         if user is None:
             context['err_msy'] = '用户名和密码错误'
@@ -140,6 +148,108 @@ class LoginView(View):
         #状态保持
         login(request,user)
 
+       # next
+        next_url = request.GET.get('next','/user/info')
+        response = redirect(next_url)
+
+        #记住用户名
+        if remember is None:
+            response.delete_cookie('uname')
+        else:
+            response.set_cookie('uname',uname,expires=60*60*24*7)
+
         #返回用户中心首页
 
         return redirect('/user/info')
+
+
+def logout_user(request):
+    logout(request)
+    return redirect('/user/login')
+
+
+#个人信息
+@login_required
+def info(request):
+    adderss = request.user.address_set.filter(isDefault=True)
+
+    if adderss:
+        adderss = adderss[0]
+    else:
+        adderss=None
+
+    context={
+        'adderss':adderss
+    }
+    return render(request,'user_center_info.html',context)
+
+
+#全部订单
+@login_required
+def order(request):
+    context = {}
+    return render(request, 'user_center_order.html',context)
+
+
+#收获地址
+class SiteView(LoginRequiredMinix,View):
+
+    def get(self,request):
+        addr_list = Address.objects.filter(user=request.user)
+        context={
+            'title':'收货地址',
+            'addr_list':addr_list,
+        }
+        return render(request,'user_center_site.html',context)
+    def post(self,request):
+        #接收数据
+        dict = request.POST
+        receiver = dict.get('receiver')
+        province = dict.get('province')
+        city = dict.get('city')
+        district = dict.get('district')
+        addr = dict.get('addr')
+        code = dict.get('code')
+        phone = dict.get('phone')
+        default = dict.get('default')
+
+        #判断数据
+        if not all([receiver,province,city,district,addr,code,phone]):
+            return render(request,'user_center_site.html',{'err_msy':'请完整填写信息'})
+
+        #保存数据
+        addrss = Address()
+        addrss.receiver = receiver
+        addrss.province_id = province
+        addrss.city_id = city
+        addrss.district_id = district
+        addrss.addr = addr
+        addrss.code = code
+        addrss.phone_number = phone
+        if default:
+            addrss.isDefault = True
+        addrss.user = request.user
+        addrss.save()
+
+
+        #返回结果
+        return redirect('/user/site')
+
+
+def area(request):
+    pid = request.GET.get('pid')
+
+    if pid is None:
+        #查询省信息
+        slist = AreaInfo.objects.filter(aParent__isnull=True)
+    else:
+        slist = AreaInfo.objects.filter(aParent_id=pid)
+    #将数据结构整理为：[{id:***,title:***}]
+    slist2 = []
+    for s in slist:
+        slist2.append({'id':s.id,'title':s.title})
+    #
+    return JsonResponse({'list':slist2})
+
+
+

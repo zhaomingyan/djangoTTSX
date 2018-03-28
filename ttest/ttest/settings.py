@@ -44,7 +44,7 @@ INSTALLED_APPS = (
     'tt_order',
     'tt_cart',
     'tt_goods',
-    'tinymce'
+    'tinymce',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -131,3 +131,47 @@ EMAIL_HOST_PASSWORD = 'python2018'
 EMAIL_FROM = '天天生鲜<itcast88@163.com>'
 
 #邮箱密码：python808
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/6",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+
+# Session
+# http://django-redis-chs.readthedocs.io/zh_CN/latest/#session-backend
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
+
+
+LOGIN_URL = '/user/login'
+
+# DEFAULT_FILE_STORAGE = 'utils.storage.FastDFSStorage'
+#
+# TINYMCE_DEFAULT_CONFIG = {
+#   'theme': 'advanced', # 丰富样式
+#   'width': 600,
+#   'height': 400,
+# }
+
+
+#指定上传文件时，使用哪个类进行保存
+DEFAULT_FILE_STORAGE = 'utils.storage.FdfsStorage'
+#指定FastDFS客户端的配置文件
+FDFS_CLIENT=os.path.join(BASE_DIR,'utils/fdfs_client.conf')
+FDFS_SERVER='http://127.0.0.1:8888/'
+
+#配置tinymce的样式
+TINYMCE_DEFAULT_CONFIG = {
+  'theme': 'advanced', # 丰富样式
+  'width': 600,
+  'height': 400,
+}
+
+
