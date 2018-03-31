@@ -9,6 +9,8 @@ from django.core.mail import send_mail
 from django.contrib.auth import authenticate,login,logout
 from django.contrib.auth.decorators import login_required
 from utils.views import LoginRequiredMinix
+from django_redis import get_redis_connection
+from tt_goods.models import GoodsSKU
 
 
 class RegisterView(View):
@@ -171,15 +173,24 @@ def logout_user(request):
 #个人信息
 @login_required
 def info(request):
+    # 查询当前用户的默认收货地址,如果没有数据则返回[]
     adderss = request.user.address_set.filter(isDefault=True)
-
     if adderss:
         adderss = adderss[0]
     else:
         adderss=None
+    # 获取redis服务器的连接,根据settings.py中的caches的default获取
+    redis_client = get_redis_connection()
+    # 因为redis中会存储所有用户的浏览记录，所以在键上需要区分用户
+    gid_list = redis_client.lrange('history%d' % request.user.id, 0, -1)
+    # 根据商品编号查询商品对象
+    goods_list = []
+    for gid in gid_list:
+        goods_list.append(GoodsSKU.objects.get(pk=gid))
 
     context={
-        'adderss':adderss
+        'adderss':adderss,
+        'goods_list': goods_list
     }
     return render(request,'user_center_info.html',context)
 
