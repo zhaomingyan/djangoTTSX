@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from .models import GoodsCategory, IndexGoodsBanner, IndexPromotionBanner, IndexCategoryGoodsBanner, GoodsSKU
 import os
+import json
 from django.conf import settings
 from django.core.cache import cache
 from django.http import Http404
@@ -8,6 +9,7 @@ from django_redis import get_redis_connection
 from django.core.paginator import Paginator, Page
 from django.core.cache import cache
 from haystack.generic_views import SearchView
+from utils.page_list import get_page_list
 
 
 # Create your views here.
@@ -42,6 +44,9 @@ def index(request):
 
         # 缓存数据
         cache.set('index', context, 3600)
+
+    # 设置购物车数量
+    context['total_count'] = get_cart_total(request)
 
     response = render(request, 'index.html', context)
 
@@ -131,18 +136,18 @@ def list_sku(request, category_id):
         # 查询指定页码的数据
     page = paginato.page(pindex)
 
-    # 构造页码列表，用于提示页码链接
-    page_list = []  # 3 4 5 6 7==> range(n-2,n+3)
-    # 如果不足5页，显示所有数字
-    if total_page <= 5:
-        page_list = range(1, total_page + 1)
-    elif pindex <= 2:  # 如果是1到2页，则显示1-5
-        page_list = range(1, 6)
-    elif pindex > total_page - 1:  # 如果是后两页，则显示最后5页
-        page_list = range(total_page - 4, total_page + 1)  # 共18页，则最后的数字是14 15 16 17 18
-    else:
-        page_list = range(pindex - 2, pindex + 3)
-
+    # # 构造页码列表，用于提示页码链接
+    # page_list = []  # 3 4 5 6 7==> range(n-2,n+3)
+    # # 如果不足5页，显示所有数字
+    # if total_page <= 5:
+    #     page_list = range(1, total_page + 1)
+    # elif pindex <= 2:  # 如果是1到2页，则显示1-5
+    #     page_list = range(1, 6)
+    # elif pindex > total_page - 1:  # 如果是后两页，则显示最后5页
+    #     page_list = range(total_page - 4, total_page + 1)  # 共18页，则最后的数字是14 15 16 17 18
+    # else:
+    #     page_list = range(pindex - 2, pindex + 3)
+    page_list = get_page_list(total_page, pindex)
     context = {
         'page': page,
         'category_list': category_list,
@@ -155,8 +160,38 @@ def list_sku(request, category_id):
 
 
 class MySearchView(SearchView):
+    def get(self, request, *args, **kwargs):
+        self.curr_request = request
+        return super().get(request, *args, **kwargs)
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context['title'] = '搜索结果'
         context['category_list'] = GoodsCategory.objects.all()
+        # 页码控制
+        total_page = context['paginator'].num_pages
+        pindex = context['page_obj'].number
+        context['page_list'] = get_page_list(total_page, pindex)
+        # 设置购物车数量
+        context['total_count'] = get_cart_total(self.curr_request)
+
         return context
+
+
+def get_cart_total(request):
+    # 获取购物车中商品的总数量
+    total_count = 0
+    # 判断用户是否登录
+    if request.user.is_authenticated():
+        # 如果登录从redis中读取
+        redis_client = get_redis_connection()
+        for v in redis_client.hvals('cart%d' % request.user.id):
+            total_count += int(v)
+    else:
+        # 如果未登录从cookie中读取
+        cart_str = request.COOKIES.get('cart')
+        if cart_str:
+            cart_dict = json.loads(cart_str)
+            for k, v in cart_dict.items():
+                total_count += v
+    return total_count

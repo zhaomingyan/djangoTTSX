@@ -11,6 +11,7 @@ from django.contrib.auth.decorators import login_required
 from utils.views import LoginRequiredMinix
 from django_redis import get_redis_connection
 from tt_goods.models import GoodsSKU
+import json
 
 
 class RegisterView(View):
@@ -160,9 +161,36 @@ class LoginView(View):
         else:
             response.set_cookie('uname',uname,expires=60*60*24*7)
 
+        #读取购物车中的信息，转成字典
+        cart_str=request.COOKIES.get('cart')
+        if cart_str:
+            # 将cookie中的购物车信息，转存入redis中
+            #构造键
+            key = 'cart%d' % request.user.id
+            #链接redis
+            redis_client = get_redis_connection()
+
+            cart_dict=json.loads(cart_str)
+            for k,v in cart_dict.items():
+                #判断redies中是否已经存在这个商品
+                if redis_client.hexists(key,k):
+                    #如果有，则数量相加
+                    count1=int(redis_client.hget(key,k))
+                    count2=v
+                    count0=count1+count2
+                    if count0>5:
+                        count0=5
+                    redis_client.hset(key,k,count0)
+                else:
+                    #如果没有，则添加
+                    redis_client.hset(key,k,v)
+
+            #已经成功转存到redis，删除cookie中的信息
+            response.delete_cookie('cart')
+
         #返回用户中心首页
 
-        return redirect('/user/info')
+        return response
 
 
 def logout_user(request):

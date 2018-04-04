@@ -1,215 +1,228 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-	<title>天天生鲜-商品详情</title>
-	<link rel="stylesheet" type="text/css" href="/static/css/reset.css">
-	<link rel="stylesheet" type="text/css" href="/static/css/main.css">
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <title>天天生鲜-商品详情</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/reset.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/main.css">
 
 </head>
 <body>
-	<div class="header_con">
-		<div class="header">
-			<div class="welcome fl">欢迎来到天天生鲜!</div>
-			<div class="fr">
-				  {% if request.user.is_authenticated %}
-                    <div class="login_btn fl">
-                         欢迎您：<em>{{ request.user.username }}</em>
-                        <span>|</span>
-                        <a href="logout_user">退出</a>
-                    </div>
-                {% else %}
-				<div class="login_btn fl">
-					<a href="/user/login">登录</a>
-					<span>|</span>
-					<a href="/user/register">注册</a>
-				</div>
-                {% endif %}
-				<div class="user_link fl">
-					<span>|</span>
-					<a href="/user/info">用户中心</a>
-					<span>|</span>
-					<a href="/user/cart">我的购物车</a>
-					<span>|</span>
-					<a href="/user/order">我的订单</a>
-				</div>
-			</div>
-		</div>		
-	</div>
-
-	<div class="search_bar clearfix">
-		<a href="index" class="logo fl"><img src="/static/images/logo.png"></a>
-		<div class="search_con fl"><form action="/search/" method="get">
-			<input type="text" class="input_text fl" name="" placeholder="搜索商品">
-            <input type="submit" class="input_btn fr" name="" value="搜索"></form>
-		</div>
-		<div class="guest_cart fr">
-			<a href="#" class="cart_name fl">我的购物车</a>
-			<div class="goods_count fl" id="show_count">1</div>
-		</div>
-	</div>
-
-	<div class="navbar_con">
-		<div class="navbar clearfix">
-			<div class="subnav_con fl">
-				<h1>全部商品分类</h1>	
-				<span></span>			
-				<ul class="subnav">
-                    {% for category in category_list %}
-					    <li><a href="/list{{ category.id }}" class="{{ category.logo }}">{{ category.name }}</a></li>
-				    {% endfor %}
-                </ul>
-			</div>
-			<ul class="navlist fl">
-				<li><a href="/">首页</a></li>
-				<li class="interval">|</li>
-				<li><a href="/">手机生鲜</a></li>
-				<li class="interval">|</li>
-				<li><a href="/">抽奖</a></li>
-			</ul>
-		</div>
-	</div>
-
-	<div class="breadcrumb">
-		<a href="#">全部分类</a>
-		<span>></span>
-		<a href="#">{{ sku.category.name }}</a>
-		<span>></span>
-		<a href="#">商品详情</a>
-	</div>
-
-	<div class="goods_detail_con clearfix">
-		<div class="goods_detail_pic fl"><img src="{{ sku.default_image.url }}"></div>
-
-		<div class="goods_detail_list fr">
-			<h3>{{ sku.name }}</h3>
-			<p>{{ sku.title }}</p>
-			<div class="prize_bar">
-				<span class="show_pirze">¥<em>{{ sku.price }}</em></span>
-				<span class="show_unit">单  位：{{ sku.unit }}</span>
-			</div>
-            <div class="total1">规格：
-                {% for other in other_list %}
-                    {% if other.id == sku.id %}
-                   <em>{{ other.price }}/{{ other.unit }}</em>&nbsp;
-                    {% else %}
-                    <a href="/{{ other.id }}">{{ other.price }}/{{ other.unit }}</a>
-                    {% endif %}
-                {% endfor %}
+<div class="header_con">
+    <div class="header">
+        <div class="welcome fl">欢迎来到天天生鲜!</div>
+        <div class="fr">
+            {% if request.user.is_authenticated %}
+                <div class="login_btn fl">
+                    欢迎您：<em>{{ request.user.username }}</em>
+                    <span>|</span>
+                    <a href="/user/logout_user">退出</a>
+                </div>
+            {% else %}
+                <div class="login_btn fl">
+                    <a href="/user/login">登录</a>
+                    <span>|</span>
+                    <a href="/user/register">注册</a>
+                </div>
+            {% endif %}
+            <div class="user_link fl">
+                <span>|</span>
+                <a href="/user/info">用户中心</a>
+                <span>|</span>
+                <a href="/cart/">我的购物车</a>
+                <span>|</span>
+                <a href="/user/order">我的订单</a>
             </div>
+        </div>
+    </div>
+</div>
 
-			<div class="goods_num clearfix">
-				<div class="num_name fl">数 量：</div>
-				<div class="num_add fl">
-					<input type="text" class="num_show fl" value="1">
-					<a href="javascript:;" class="add fr">+</a>
-					<a href="javascript:;" class="minus fr">-</a>	
-				</div> 
-			</div>
-			<div class="total">总价：<em>{{ sku.price }}元</em></div>
-			<div class="operate_btn">
-				<a href="javascript:;" class="buy_btn">立即购买</a>
-				<a href="javascript:;" class="add_cart" id="add_cart">加入购物车</a>				
-			</div>
-		</div>
-	</div>
+<div class="search_bar clearfix">
+    <a href="index" class="logo fl"><img src="/static/images/logo.png"></a>
+    <div class="search_con fl">
+        <form action="/search/" method="get">
+            <input type="text" class="input_text fl" name="" placeholder="搜索商品">
+            <input type="submit" class="input_btn fr" name="" value="搜索"></form>
+    </div>
+    <div class="guest_cart fr">
+        <a href="/cart/" class="cart_name fl">我的购物车</a>
+        <div class="goods_count fl" id="show_count">{{ total_count|default:0 }}</div>
+    </div>
+</div>
 
-	<div class="main_wrap clearfix">
-		<div class="l_wrap fl clearfix">
-			<div class="new_goods">
-				<h3>新品推荐</h3>
-				<ul>
-                    {% for new in new_list %}
-					<li>
-						<a href="/{{ new.id }}"><img src="{{ new.default_image.url }}"></a>
-						<h4><a href="{{ new.id }}">{{ new.name }}</a></h4>
-						<div class="prize">￥{{ new.price }}</div>
-					</li>
-                    {% endfor %}
-				</ul>
-			</div>
-		</div>
+<div class="navbar_con">
+    <div class="navbar clearfix">
+        <div class="subnav_con fl">
+            <h1>全部商品分类</h1>
+            <span></span>
+            <ul class="subnav">
+                {% for category in category_list %}
+                    <li><a href="/list{{ category.id }}" class="{{ category.logo }}">{{ category.name }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <ul class="navlist fl">
+            <li><a href="/">首页</a></li>
+            <li class="interval">|</li>
+            <li><a href="/">手机生鲜</a></li>
+            <li class="interval">|</li>
+            <li><a href="/">抽奖</a></li>
+        </ul>
+    </div>
+</div>
 
-		<div class="r_wrap fr clearfix">
-			<ul class="detail_tab clearfix">
-				<li class="active">商品介绍</li>
-				<li>评论</li>
-			</ul>
+<div class="breadcrumb">
+    <a href="#">全部分类</a>
+    <span>></span>
+    <a href="#">{{ sku.category.name }}</a>
+    <span>></span>
+    <a href="#">商品详情</a>
+</div>
 
-			<div class="tab_content">{{ sku.goods.desc|safe }}</div>
+<div class="goods_detail_con clearfix">
+    <div class="goods_detail_pic fl"><img src="{{ sku.default_image.url }}"></div>
 
-		</div>
-	</div>
+    <div class="goods_detail_list fr">
+        <h3>{{ sku.name }}</h3>
+        <p>{{ sku.title }}</p>
+        <div class="prize_bar">
+            <span class="show_pirze">¥<em>{{ sku.price }}</em></span>
+            <span class="show_unit">单  位：{{ sku.unit }}</span>
+        </div>
+        <div class="total1">规格：
+            {% for other in other_list %}
+                {% if other.id == sku.id %}
+                    <em>{{ other.price }}/{{ other.unit }}</em>&nbsp;
+                {% else %}
+                    <a href="/{{ other.id }}">{{ other.price }}/{{ other.unit }}</a>
+                {% endif %}
+            {% endfor %}
+        </div>
 
-	<div class="footer">
-		<div class="foot_link">
-			<a href="#">关于我们</a>
-			<span>|</span>
-			<a href="#">联系我们</a>
-			<span>|</span>
-			<a href="#">招聘人才</a>
-			<span>|</span>
-			<a href="#">友情链接</a>		
-		</div>
-		<p>CopyRight © 2016 北京天天生鲜信息技术有限公司 All Rights Reserved</p>
-		<p>电话：010-****888    京ICP备*******8号</p>
-	</div>
-	<div class="add_jump"></div>
+        <div class="goods_num clearfix">
+            <div class="num_name fl">数 量：</div>
+            <div class="num_add fl">
+                {% csrf_token %}
+                <input type="hidden" id="sku_id" value="{{ sku.id }}">
+                <input type="text" class="num_show fl" value="1">
+                <a href="javascript:;" class="add fr">+</a>
+                <a href="javascript:;" class="minus fr">-</a>
+            </div>
+        </div>
+        <div class="total">总价：<em>{{ sku.price }}元</em></div>
+        <div class="operate_btn">
+            <a href="javascript:;" class="buy_btn">立即购买</a>
+            <a href="javascript:;" class="add_cart" id="add_cart">加入购物车</a>
+        </div>
+    </div>
+</div>
 
-	<script type="text/javascript" src="/static/js/jquery-1.12.2.js"></script>
-    <script type="text/javascript" src="/static/js/jquery-1.12.4.min.js"></script>
-	<script type="text/javascript">
-		var $add_x = $('#add_cart').offset().top;
-		var $add_y = $('#add_cart').offset().left;
+<div class="main_wrap clearfix">
+    <div class="l_wrap fl clearfix">
+        <div class="new_goods">
+            <h3>新品推荐</h3>
+            <ul>
+                {% for new in new_list %}
+                    <li>
+                        <a href="/{{ new.id }}"><img src="{{ new.default_image.url }}"></a>
+                        <h4><a href="{{ new.id }}">{{ new.name }}</a></h4>
+                        <div class="prize">￥{{ new.price }}</div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
 
-		var $to_x = $('#show_count').offset().top;
-		var $to_y = $('#show_count').offset().left;
+    <div class="r_wrap fr clearfix">
+        <ul class="detail_tab clearfix">
+            <li class="active">商品介绍</li>
+            <li>评论</li>
+        </ul>
 
-		$(".add_jump").css({'left':$add_y+80,'top':$add_x+10,'display':'block'})
-		$('#add_cart').click(function(){
-			$(".add_jump").stop().animate({
-				'left': $to_y+7,
-				'top': $to_x+7},
-				"fast", function() {
-					$(".add_jump").fadeOut('fast',function(){
-						$('#show_count').html(2);
-					});
+        <div class="tab_content">{{ sku.goods.desc|safe }}</div>
 
-			});
-		});
+    </div>
+</div>
+
+<div class="footer">
+    <div class="foot_link">
+        <a href="#">关于我们</a>
+        <span>|</span>
+        <a href="#">联系我们</a>
+        <span>|</span>
+        <a href="#">招聘人才</a>
+        <span>|</span>
+        <a href="#">友情链接</a>
+    </div>
+    <p>CopyRight © 2016 北京天天生鲜信息技术有限公司 All Rights Reserved</p>
+    <p>电话：010-****888 京ICP备*******8号</p>
+</div>
+<div class="add_jump"></div>
+
+<script type="text/javascript" src="/static/js/jquery-1.12.4.min.js"></script>
+<script type="text/javascript">
+    var $add_x = $('#add_cart').offset().top;
+    var $add_y = $('#add_cart').offset().left;
+
+    var $to_x = $('#show_count').offset().top;
+    var $to_y = $('#show_count').offset().left;
+
+    $('#add_cart').click(function () {
+        $.post('/cart/add', {
+            'sku_id': $('#sku_id').val(),
+            'count': $('.num_show').val(),
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+        }, function (data) {
+            if (data.status == 1) {
+                $(".add_jump").css({'left': $add_y + 80, 'top': $add_x + 10, 'display': 'block'});
+                $(".add_jump").stop().animate({
+                        'left': $to_y + 7,
+                        'top': $to_x + 7
+                    },
+                    "fast", function () {
+                        $(".add_jump").fadeOut('fast', function () {
+                            $('#show_count').html(data.total_count);
+                        });
+
+                    });
+            }
+        })
+    });
+
 
     $('.num_show').blur(function () {
         //当数量失去焦点时，计算总价
-        var num=parseInt($(this).val());
-        var price=parseFloat($('.show_pirze>em').text());
+        var num = parseInt($(this).val());
+        var price = parseFloat($('.show_pirze>em').text());
         //验证num有效性
-        if (isNaN(num)){  //isNaN==>is not a number
-            num=1
+        if (isNaN(num)) {  //isNaN==>is not a number
+            num = 1
         }
-        if (num<1){
-            num=1
+        if (num < 1) {
+            num = 1
         }
-        if (num>5){
-            num=5
+        if (num > 5) {
+            num = 5
         }
         $(this).val(num);
         //加算总价
-        var total=num*price;
-        $('.total>em').text(total.toFixed(2)+'元')
+        var total = num * price;
+        $('.total>em').text(total.toFixed(2) + '元')
     });
 
     $('.add').click(function () {
-            var num = parseInt($('.num_show').val());
-            num ++;
-            $('.num_show').val(num).blur(); //blur ()模拟触发这个事件
-        });
-     $('.minus').click(function () {
-            var num = parseInt($('.num_show').val());
-            num --;
-            $('.num_show').val(num).blur(); //blur ()模拟触发这个事件
-        });
+        var num = parseInt($('.num_show').val());
+        num++;
+        $('.num_show').val(num).blur(); //blur ()模拟触发这个事件
+    });
+    $('.minus').click(function () {
+        var num = parseInt($('.num_show').val());
+        num--;
+        $('.num_show').val(num).blur(); //blur ()模拟触发这个事件
+    });
 
-	</script>
-	
+</script>
+
 </body>
 </html>
